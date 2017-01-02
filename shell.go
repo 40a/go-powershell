@@ -21,6 +21,7 @@ type Shell struct {
 	stderr io.ReadCloser
 }
 
+// Start starts a powershell process and then waits for input commands.
 func Start() (*Shell, error) {
 	cmd := exec.Command("powershell.exe", "-NoExit", "-Command", "-")
 
@@ -47,6 +48,9 @@ func Start() (*Shell, error) {
 	return &Shell{cmd, stdin, stdout, stderr}, nil
 }
 
+// Execute runs a single command and returns its stdout, stderr and possibly
+// an error. Apart from general failures, the function will also return an
+// error if the stderr is not empty.
 func (s *Shell) Execute(cmd string) (string, string, error) {
 	if s.handle == nil {
 		return "", "", errors.Annotate(errors.New(cmd), "Cannot execute commands on closed shells.")
@@ -82,6 +86,9 @@ func (s *Shell) Execute(cmd string) (string, string, error) {
 	return sout, serr, nil
 }
 
+// Exit closes the powershell process and leaves the shell struct in a state
+// where it cannot be used anymore. You need to create a new shell struct by
+// calling Start() again.
 func (s *Shell) Exit() {
 	s.stdin.Write([]byte("exit" + newline))
 	s.stdin.Close()

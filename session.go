@@ -9,11 +9,14 @@ import (
 	"github.com/juju/errors"
 )
 
+// Session represents a remote session.
 type Session struct {
 	shell *Shell
 	name  string
 }
 
+// EnterSession uses a shell to establish a remote session to a different
+// computer.
 func EnterSession(s *Shell, config *Config) (*Session, error) {
 	asserted, ok := config.Credential.(credential)
 	if ok {
@@ -36,6 +39,7 @@ func EnterSession(s *Shell, config *Config) (*Session, error) {
 	return &Session{s, name}, nil
 }
 
+// Execute will run the given command through the remote session.
 func (s *Session) Execute(cmd string) (string, string, error) {
 	if s.shell == nil {
 		return "", "", errors.Annotate(errors.New(cmd), "Cannot execute commands on closed sessions.")
@@ -44,6 +48,9 @@ func (s *Session) Execute(cmd string) (string, string, error) {
 	return s.shell.Execute(fmt.Sprintf("Invoke-Command -Session $%s -Script {%s}", s.name, cmd))
 }
 
+// Exit will close the remote session, but leave the underlying shell running.
+// After calling this, the session struct is not usable anymore and you need to
+// create a new one by calling EnterSession() again.
 func (s *Session) Exit() {
 	s.shell.Execute(fmt.Sprintf("Disconnect-PSSession -Session $%s", s.name))
 	s.shell = nil

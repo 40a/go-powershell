@@ -12,6 +12,8 @@ const (
 	HTTPSPort = 5986
 )
 
+// Config represents the possible options for establishing remote
+// connects (i.e. they wrap the options for the New-PSSession cmdlet).
 type Config struct {
 	ComputerName          string
 	AllowRedirection      bool
@@ -22,10 +24,15 @@ type Config struct {
 	UseSSL                bool
 }
 
+// NewDefaultConfig returns an empty configuration. In the future, there
+// might be additional, pre-selected values, but right now the struct is just
+// empty.
 func NewDefaultConfig() *Config {
 	return &Config{}
 }
 
+// ToArgs turns the configuration into a string slice containing all the
+// configured options.
 func (c *Config) ToArgs() []string {
 	args := make([]string, 0)
 
@@ -65,6 +72,9 @@ func (c *Config) ToArgs() []string {
 	return args
 }
 
+// QuoteArg can be used to quote a PowerShell argument. Note that the resulting
+// string will reproduce the input verbatim, so you cannot use this to quote
+// variables.
 func QuoteArg(s string) string {
 	return "'" + strings.Replace(s, "'", "\"", -1) + "'"
 }

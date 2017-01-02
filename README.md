@@ -62,6 +62,16 @@ func main() {
 }
 ```
 
+Note that a single shell instance is not safe for concurrent use, as are remote
+sessions. You can have as many remote sessions using the same shell as you like,
+but you must execute commands serially. If you need concurrency, you can just
+spawn multiple PowerShell processes (i.e. call ``.Start()`` multiple times).
+
+Also, note that all commands that you execute are wrapped in special echo
+statements to delimit the stdout/stderr streams. After ``.Execute()``ing a command,
+you can therefore not access ``$LastExitCode`` anymore and expect meaningful
+results.
+
 ## License
 
 MIT, see LICENSE file.
