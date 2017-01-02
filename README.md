@@ -23,16 +23,33 @@ import (
 )
 
 func main() {
+	// start a local powershell process
+	shell, err := ps.Start()
+	if err != nil {
+		panic(err)
+	}
+	defer shell.Exit()
+
+	// ... and interact with it
+	stdout, stderr, err := shell.Execute("Get-WmiObject -Class Win32_Processor")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(stdout)
+
+	// use the existing shell to start a remote session
 	config := ps.NewDefaultConfig()
 	config.ComputerName = "remote-pc-1"
 
-	session, err := ps.EnterSession(config)
+	session, err := ps.EnterSession(shell, config)
 	if err != nil {
 		panic(err)
 	}
 	defer session.Exit()
 
-	stdout, stderr, err := session.Execute("Get-WmiObject -Class Win32_Processor")
+	// everything run via the session is run on the remote machine
+	stdout, stderr, err = session.Execute("Get-WmiObject -Class Win32_Processor")
 	if err != nil {
 		panic(err)
 	}

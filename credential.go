@@ -8,8 +8,12 @@ import (
 	"github.com/juju/errors"
 )
 
+type executor interface {
+	Execute(string) (string, string, error)
+}
+
 type credential interface {
-	prepare(s *Session) (interface{}, error)
+	prepare(executor) (interface{}, error)
 }
 
 type UserPasswordCredential struct {
@@ -17,16 +21,19 @@ type UserPasswordCredential struct {
 	Password string
 }
 
-func (c *UserPasswordCredential) prepare(s *Session) (interface{}, error) {
-	_, _, err := s.executeDirectly(fmt.Sprintf("$gorillaPassword = ConvertTo-SecureString -String %s -AsPlainText -Force", QuoteArg(c.Password)))
+func (c *UserPasswordCredential) prepare(s executor) (interface{}, error) {
+	name := "goCred" + createRandomString(8)
+	pwname := "goPass" + createRandomString(8)
+
+	_, _, err := s.Execute(fmt.Sprintf("$%s = ConvertTo-SecureString -String %s -AsPlainText -Force", pwname, QuoteArg(c.Password)))
 	if err != nil {
 		return nil, errors.Annotate(err, "Could not convert password to secure string")
 	}
 
-	_, _, err = s.executeDirectly(fmt.Sprintf("$gorillaCredential = New-Object -TypeName 'System.Management.Automation.PSCredential' -ArgumentList %s, $gorillaPassword", QuoteArg(c.Username)))
+	_, _, err = s.Execute(fmt.Sprintf("$%s = New-Object -TypeName 'System.Management.Automation.PSCredential' -ArgumentList %s, $%s", name, QuoteArg(c.Username), pwname))
 	if err != nil {
 		return nil, errors.Annotate(err, "Could not create PSCredential object")
 	}
 
-	return "$gorillaCredential", nil
+	return fmt.Sprintf("$%s", name), nil
 }
