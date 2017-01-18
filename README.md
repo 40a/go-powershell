@@ -1,5 +1,6 @@
 # go-powershell
 
+![License](https://img.shields.io/github/license/gorillalabs/go-powershell.svg)
 [![GoDoc](https://godoc.org/github.com/gorillalabs/go-powershell?status.svg)](https://godoc.org/github.com/gorillalabs/go-powershell)
 
 This package is inspired by [jPowerShell](https://github.com/profesorfalken/jPowerShell)
@@ -96,6 +97,16 @@ func main() {
 	fmt.Println(stdout)
 }
 ```
+
+Note that a single shell instance is not safe for concurrent use, as are remote
+sessions. You can have as many remote sessions using the same shell as you like,
+but you must execute commands serially. If you need concurrency, you can just
+spawn multiple PowerShell processes (i.e. call ``.New()`` multiple times).
+
+Also, note that all commands that you execute are wrapped in special echo
+statements to delimit the stdout/stderr streams. After ``.Execute()``ing a command,
+you can therefore not access ``$LastExitCode`` anymore and expect meaningful
+results.
 
 ## License
 
