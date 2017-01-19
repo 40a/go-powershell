@@ -5,53 +5,38 @@ package powershell
 import (
 	"fmt"
 	"io"
-	"os/exec"
 	"strings"
 	"sync"
 
+	"github.com/gorillalabs/go-powershell/backend"
+	"github.com/gorillalabs/go-powershell/utils"
 	"github.com/juju/errors"
 )
 
 const newline = "\r\n"
 
-type Shell struct {
-	handle *exec.Cmd
-	stdin  io.WriteCloser
-	stdout io.ReadCloser
-	stderr io.ReadCloser
+type Shell interface {
+	Execute(cmd string) (string, string, error)
+	Exit()
 }
 
-// Start starts a powershell process and then waits for input commands.
-func Start() (*Shell, error) {
-	cmd := exec.Command("powershell.exe", "-NoExit", "-Command", "-")
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, errors.Annotate(err, "Could not get hold of the PowerShell's stdin stream")
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, errors.Annotate(err, "Could not get hold of the PowerShell's stdout stream")
-	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, errors.Annotate(err, "Could not get hold of the PowerShell's stderr stream")
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		return nil, errors.Annotate(err, "Could not spawn PowerShell process")
-	}
-
-	return &Shell{cmd, stdin, stdout, stderr}, nil
+type shell struct {
+	handle backend.Waiter
+	stdin  io.Writer
+	stdout io.Reader
+	stderr io.Reader
 }
 
-// Execute runs a single command and returns its stdout, stderr and possibly
-// an error. Apart from general failures, the function will also return an
-// error if the stderr is not empty.
-func (s *Shell) Execute(cmd string) (string, string, error) {
+func New(backend backend.Starter) (Shell, error) {
+	handle, stdin, stdout, stderr, err := backend.StartProcess("powershell.exe", "-NoExit", "-Command", "-")
+	if err != nil {
+		return nil, err
+	}
+
+	return &shell{handle, stdin, stdout, stderr}, nil
+}
+
+func (s *shell) Execute(cmd string) (string, string, error) {
 	if s.handle == nil {
 		return "", "", errors.Annotate(errors.New(cmd), "Cannot execute commands on closed shells.")
 	}
@@ -86,12 +71,16 @@ func (s *Shell) Execute(cmd string) (string, string, error) {
 	return sout, serr, nil
 }
 
-// Exit closes the powershell process and leaves the shell struct in a state
-// where it cannot be used anymore. You need to create a new shell struct by
-// calling Start() again.
-func (s *Shell) Exit() {
+func (s *shell) Exit() {
 	s.stdin.Write([]byte("exit" + newline))
-	s.stdin.Close()
+
+	// if it's possible to close stdin, do so (some backends, like the local one,
+	// do support it)
+	closer, ok := s.stdin.(io.Closer)
+	if ok {
+		closer.Close()
+	}
+
 	s.handle.Wait()
 
 	s.handle = nil
@@ -127,5 +116,5 @@ func streamReader(stream io.Reader, boundary string, buffer *string, signal *syn
 }
 
 func createBoundary() string {
-	return "gorilla" + createRandomString(16)
+	return "$gorilla" + utils.CreateRandomString(12) + "$"
 }

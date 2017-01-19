@@ -1,13 +1,13 @@
 // Copyright (c) 2017 Gorillalabs. All rights reserved.
 
-package powershell
+package utils
 
 import (
 	"crypto/rand"
 	"encoding/hex"
 )
 
-func createRandomString(bytes int) string {
+func CreateRandomString(bytes int) string {
 	c := bytes
 	b := make([]byte, c)
 
