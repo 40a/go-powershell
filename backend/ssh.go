@@ -16,22 +16,22 @@ type SSH struct {
 func (b *SSH) StartProcess(cmd string, args ...string) (Waiter, io.Writer, io.Reader, io.Reader, error) {
 	stdin, err := b.Session.StdinPipe()
 	if err != nil {
-		return nil, nil, nil, nil, errors.Annotate(err, "Could not get hold of the PowerShell's stdin stream")
+		return nil, nil, nil, nil, errors.Annotate(err, "Could not get hold of the SSH session's stdin stream")
 	}
 
 	stdout, err := b.Session.StdoutPipe()
 	if err != nil {
-		return nil, nil, nil, nil, errors.Annotate(err, "Could not get hold of the PowerShell's stdout stream")
+		return nil, nil, nil, nil, errors.Annotate(err, "Could not get hold of the SSH session's stdout stream")
 	}
 
 	stderr, err := b.Session.StderrPipe()
 	if err != nil {
-		return nil, nil, nil, nil, errors.Annotate(err, "Could not get hold of the PowerShell's stderr stream")
+		return nil, nil, nil, nil, errors.Annotate(err, "Could not get hold of the SSH session's stderr stream")
 	}
 
 	err = b.Session.Start(cmd) // TODO: quote and add args
 	if err != nil {
-		return nil, nil, nil, nil, errors.Annotate(err, "Could not spawn PowerShell process")
+		return nil, nil, nil, nil, errors.Annotate(err, "Could not spawn process via SSH")
 	}
 
 	return b.Session, stdin, stdout, stderr, nil
