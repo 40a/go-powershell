@@ -15,7 +15,7 @@ import (
 type sshSession interface {
 	Waiter
 
-	StdinPipe() (io.Writer, error)
+	StdinPipe() (io.WriteCloser, error)
 	StdoutPipe() (io.Reader, error)
 	StderrPipe() (io.Reader, error)
 	Start(string) error
