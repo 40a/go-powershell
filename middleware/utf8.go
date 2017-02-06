@@ -21,13 +21,15 @@ type utf8 struct {
 func NewUTF8(upstream Middleware) (Middleware, error) {
 	wrapper := "goUTF8" + utils.CreateRandomString(8)
 
-	_, _, err := upstream.Execute(fmt.Sprintf(`function %s { Process { if ($_) { [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($_)) } else { '' } } }`, wrapper))
+	_, _, err := upstream.Execute(fmt.Sprintf(`function %s { process { if ($_) { [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($_)) } else { '' } } }`, wrapper))
 
 	return &utf8{upstream, wrapper}, err
 }
 
 func (u *utf8) Execute(cmd string) (string, string, error) {
-	cmd = fmt.Sprintf(`%s | %s`, cmd, u.wrapper)
+	// Out-String to concat all lines into a single line,
+	// Write-Host to prevent line breaks at the "window width"
+	cmd = fmt.Sprintf(`%s | Out-String | %s | Write-Host`, cmd, u.wrapper)
 
 	stdout, stderr, err := u.upstream.Execute(cmd)
 	if err != nil {
