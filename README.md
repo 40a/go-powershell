@@ -5,7 +5,7 @@
 
 This package is inspired by [jPowerShell](https://github.com/profesorfalken/jPowerShell)
 and allows one to run and remote-control a PowerShell session. Use this if you
-don't have a static script that you want to execute, bur rather run dynamic
+don't have a static script that you want to execute, but rather run dynamic
 commands.
 
 ## Installation
